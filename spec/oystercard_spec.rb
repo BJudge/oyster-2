@@ -18,36 +18,34 @@ describe Oystercard do
       end
     end
 
-    
+
     it 'is initially not in a journey' do
       expect(subject).not_to be_in_journey
     end
 
-  describe '#touch_in' do
+  describe '#touch_in and #touch_out' do
+    before do
+      subject.top_up(5)
+    end
+
       it 'can touch in' do
-        subject.top_up(5)
         subject.touch_in
         expect(subject).to be_in_journey
       end
 
-
-      it 'will not touch in if below minimum balance' do
-        expect{ subject.touch_in }.to raise_error "Balance not enough"
+      it 'can touch out' do
+        subject.touch_in
+        subject.touch_out
+        expect(subject).not_to be_in_journey
       end
 
-
-  end
-    it 'can touch out' do
-      subject.top_up(5)
-      subject.touch_in
-      subject.touch_out
-      expect(subject).not_to be_in_journey
+      it 'should deduct a minimum fare on touch out' do
+        subject.touch_in
+        expect{ subject.touch_out }.to change{ subject.balance }.by(-Oystercard::MINIMUM_FARE)
+      end
     end
 
-    it 'should deduct a minimum fare on touch out' do
-      subject.top_up(5)
-      subject.touch_in
-      expect{ subject.touch_out }.to change{ subject.balance }.by(-Oystercard::MINIMUM_FARE)
+    it 'will not touch in if below minimum balance' do
+      expect{ subject.touch_in }.to raise_error "Balance not enough"
     end
-
 end
