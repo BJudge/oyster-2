@@ -1,6 +1,8 @@
 require 'oystercard'
 
 describe Oystercard do
+  let(:entry_station){double :station}
+  let(:exit_station){double :station}
   it 'has a balance of Zero' do
     expect(subject.balance).to eq 0
   end
@@ -24,36 +26,56 @@ describe Oystercard do
     end
 
   describe '#touch_in and #touch_out' do
-    let(:station){ double :station }
+
     before do
       subject.top_up(5)
     end
 
+      context 'journey stages' do
+        before do
+          subject.touch_in(entry_station)
+        end
 
-      it 'can touch in' do
-        subject.touch_in(station)
-        expect(subject).to be_in_journey
-      end
+        it 'can touch in' do
+          expect(subject).to be_in_journey
+        end
 
-      it 'stores the entry station' do
-        subject.touch_in(station)
-        expect(subject.entry_station).to eq station
-      end
+        it 'stores the entry station' do
+          expect(subject.entry_station).to eq entry_station
+        end
 
-      it 'can touch out' do
-        subject.touch_in(station)
-        subject.touch_out
-        expect(subject).not_to be_in_journey
-      end
+        it 'can touch out' do
+          subject.touch_out(exit_station)
+          expect(subject).not_to be_in_journey
+        end
 
-      it 'should deduct a minimum fare on touch out' do
-        subject.touch_in(station)
-        expect{ subject.touch_out }.to change{ subject.balance }.by(-Oystercard::MINIMUM_FARE)
+        it 'stores exit station' do
+          subject.touch_out(exit_station)
+          expect(subject.exit_station).to eq exit_station
+        end
+
+        it 'should deduct a minimum fare on touch out' do
+          expect{ subject.touch_out(exit_station) }.to change{ subject.balance }.by(-Oystercard::MINIMUM_FARE)
+        end
+
+        it 'should have an empty list of journeys by default' do
+          expect(subject.journey).to be_empty
+        end
+
+        let(:journey){ {entry_station: entry_station, exit_station: exit_station} }
+
+          it 'stores a journey' do
+            subject.touch_in(entry_station)
+            subject.touch_out(exit_station)
+            expect(subject.journey).to include journey
+          end
+
+
       end
     end
 
     it 'will not touch in if below minimum balance' do
-      expect{ subject.touch_in(:station) }.to raise_error "Balance not enough"
+      expect{ subject.touch_in(entry_station) }.to raise_error "Balance not enough"
     end
 
 
